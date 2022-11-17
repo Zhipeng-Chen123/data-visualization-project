@@ -1,0 +1,144 @@
+---
+title: "project graph 2"
+author: "Zhipeng Chen"
+date: "2022/3/13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(mdsr)
+library(readxl)
+library(data.table)
+library(scales)
+library(repr)
+library(forcats)
+
+Europe_Power_Sector_2020 <- read_excel("C:/Users/12694/OneDrive/Desktop/Spring 2022/STAT 4380 data science/midterm project/Data-file-Europe-Power-Sector-2020.xlsx", 
+    sheet = "Pivot, % of production", col_types = c("numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric"), skip = 3)
+
+```
+
+# problem 1: I found data is very hard to process. I can not categorize the different types of energy since they are in differet columns
+
+## 1. drop columns with all NAs 
+## 2. convert data frame to data table in order to use `melt()`
+## 3. Reshape R dataframes wide-to-long with melt
+
+```{r}
+EU_power2 <- Europe_Power_Sector_2020 %>%
+   select(-"Demand", -"Production", -"Net imports") %>%
+    dplyr::rename(`Fossil fuels` = Fossil)
+
+
+setDT(EU_power2)
+class(EU_power2)
+
+EU_reshaped <- melt(data = EU_power2,
+        id.vars = c("Row Labels"),
+        variable.name = "type of energy",
+        value.name = "Sum of Share of production (%)")
+```
+
+#problem 2: combining line graph part and bar graph part in one chart
+
+##set two different datasets for two graphs in the same charts
+##make two lines based on different type of energy and set specific color for both
+##make good linetype
+##good points
+##title and subtitle
+##position, size and shapes/colors of legends/remove the legend title
+##remove x and y axis labels
+##size, limit and breaks of x and y labels / convert y axis labels to percents
+##change the color of plot and panel backgound/
+##remove all vertical gridlines and minor horizontal gridlines/ change the color of gridlines
+##set ticks color and size and length
+##make stacked bar graph/ changing stacked order from 
+##
+##let stacked bar chart bw shown below the line graph 
+
+
+#Difficulty
+##cannot make specific color for individual word in the title
+##cannot make legend shape rounded tectangle
+##cannot make line more smoothier while the line crosses dots
+##cannot make it in right order for legends from different datasets
+
+```{r line_bar_and_format}
+
+data_line <- EU_reshaped %>%
+    filter(`type of energy` == "Fossil fuels" |  `type of energy` =="Renewables") 
+
+data_bar <- EU_reshaped %>%
+    filter(`type of energy` == "Bioenergy" | `type of energy` =="Hydro" |
+           `type of energy` == "Other renewables" | `type of energy` =="Solar" | `type of energy` == "Wind")
+
+    as.factor(data_bar$`type of energy`)
+    class(data_bar$`type of energy`)
+
+
+    
+ggplot() +
+    geom_bar(data = data_bar, aes(x = `Row Labels`, 
+                                  y = `Sum of Share of production (%)`, 
+                                  fill = factor(`type of energy`, 
+                                                levels = c("Wind", "Solar", "Other renewables", "Hydro", "Bioenergy"))), stat = "identity") +
+    geom_line(data = data_line, aes(x = `Row Labels`, 
+                                    y = `Sum of Share of production (%)`, 
+                                    color = `type of energy`), 
+              size = 2.5) +
+    geom_point(data = data_line, aes(x = `Row Labels`, 
+                                     y = `Sum of Share of production (%)`,
+                                     color = `type of energy`),
+               size = 4.25) +
+    labs(title = "Renewables growth driven by wind and solar", 
+         subtitle = "% share of electricity production in EU-27",
+         caption = "Europe's Power Sector in 2020, published by Ember and Agora Energiewende on 25th Januart 2021") +
+    theme(plot.title = element_text(size = 24.5, face = "bold"),
+        plot.subtitle = element_text(size = 17.5),
+        plot.caption = element_text(color = "#666666", size = 15, hjust = 0), 
+        plot.background = element_rect(fill = "#F0F0F0"),
+        panel.background = element_rect(color = "#F0F0F0", fill = "#F0F0F0"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major=element_line(colour="#AFB3B3", size = 1),
+        panel.grid.minor=element_blank(),
+        legend.position = "top",
+        legend.title = element_blank(),
+        legend.key=element_blank(),
+        legend.background = element_rect(color = "#F0F0F0", fill = "#F0F0F0"),
+        legend.text = element_text(size = 15),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size = 13.5, color = "#666666"),
+        axis.text.y = element_text(size = 15, color = "#666666"),
+        axis.ticks=element_line(size = 1, color = "#AFB3B3"),
+        axis.ticks.length=unit(.25, "cm")) +
+    guides(color = guide_legend(override.aes=list(shape = 15,
+                                                  linetype = 0))) +
+    scale_x_continuous(breaks=seq(2010, 2020, by = 1)) +
+    scale_y_continuous(limit = c(0, 50),
+                       breaks= seq(0, 50, by = 10),
+                       label = percent_format(accuracy = 1, scale = 1),
+                       expand = c(0, NA)) +
+    scale_color_manual(values = c("Fossil fuels" = "#000033","Renewables" = "#6DB562")) +
+    scale_fill_manual(values = c("Bioenergy" = "#919191", "Hydro" = "#00E5EE", "Other renewables" = "#EE82EE", "Solar" = "#FFD700", "Wind" = "#1874CD"))
+    
+    
+    
+
+                    
+```
+
+
+
+
+
+
+
